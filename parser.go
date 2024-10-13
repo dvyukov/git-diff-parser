@@ -33,7 +33,7 @@ type ChangeList []ContentChange
 // Hunk is a line that starts with @@.
 // Each hunk shows one area where the files differ
 // Unified format hunks look like this:
-// @@ from-file-line-numbers to-file-line-numbers @@
+// @@ from-file-line-numbers to-file-line-numbers @@( context)?
 //
 //	line-from-either-file
 //	line-from-either-file…
@@ -45,6 +45,7 @@ type Hunk struct {
 	CountOld           int        `json:"count_old"`
 	StartLineNumberNew int        `json:"start_line_number_new"`
 	CountNew           int        `json:"count_new"`
+	Context            string     `json:"context,omitempty"`
 }
 
 func (changes *ChangeList) IsSignificant() bool {
@@ -57,7 +58,7 @@ func (changes *ChangeList) IsSignificant() bool {
 }
 
 func NewHunk(line string) (Hunk, error) {
-	namedHunkRegex := regexp.MustCompile(`(?m)^@@ -(?P<start_old>\d+),?(?P<count_old>\d+)? \+(?P<start_new>\d+),?(?P<count_new>\d+)? @@`)
+	namedHunkRegex := regexp.MustCompile(`(?m)^@@ -(?P<start_old>\d+),?(?P<count_old>\d+)? \+(?P<start_new>\d+),?(?P<count_new>\d+)? @@ ?(?P<context>.*)?`)
 	match := namedHunkRegex.FindStringSubmatch(line)
 	result := make(map[string]string)
 	for i, name := range namedHunkRegex.SubexpNames() {
@@ -86,6 +87,7 @@ func NewHunk(line string) (Hunk, error) {
 		CountOld:           countOld,
 		StartLineNumberNew: startLineNumberNew,
 		CountNew:           countNew,
+		Context:            result["context"],
 	}, nil
 }
 
